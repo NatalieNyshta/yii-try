@@ -13,7 +13,13 @@ class CustomerController extends Controller
 {
     public function actionIndex()
     {
-        $records = $this->findRecordsByQuery();
+        $number = \Yii::$app->request->get('phone_number');
+        if ($number) {
+            $records = $this->findRecordsByQuery($number);
+        } else {
+            $records = $this->findAllRecords();
+        }
+
         return $this->render('index', compact('records'));
     }
 
@@ -36,9 +42,21 @@ class CustomerController extends Controller
         return $this->render('query');
     }
 
-    private function findRecordsByQuery()
+    private function findAllRecords()
     {
-        $number = \Yii::$app->request->get('phone_number');
+        $records = [];
+        $customerRecords = CustomerRecord::find()->all();
+        foreach($customerRecords as $record) {
+            $phoneRecord = PhoneRecord::findOne(['customer_id' => $record->id]);
+            $records[] = $this->makeCustomer($record, $phoneRecord);
+        }
+
+        $dataProvider = $this->wrapIntoDataProvider($records);
+        return $dataProvider;
+    }
+
+    private function findRecordsByQuery($number)
+    {
         $records = $this->getRecordsByPhoneNumber($number);
         $dataProvider = $this->wrapIntoDataProvider($records);
         return $dataProvider;
@@ -79,28 +97,28 @@ class CustomerController extends Controller
     {
         $customerRecord = new CustomerRecord();
         $customerRecord->name = $customer->name;
-        $customerRecord->birth_date = $customer->birthDate;
+        $customerRecord->birth_date = $customer->birthDate->format('Y-m-d');
         $customerRecord->notes = $customer->notes;
-
-        $customerRecord->save();
+        $result = $customerRecord->save();
 
         foreach ($customer->phones as $phone)
         {
             $phoneRecord = new PhoneRecord();
             $phoneRecord->number = $phone->number;
             $phoneRecord->customer_id = $customerRecord->id;
-            $phoneRecord->save();
+            $result = $phoneRecord->save();
         }
     }
 
-    private function makeCustomer(CustomerRecord $customerRecord, PhoneRecord $phoneRecord)
+    private function makeCustomer(CustomerRecord $customerRecord, PhoneRecord $phoneRecord = null)
     {
         $name = $customerRecord->name;
         $birthDate = new \DateTime($customerRecord->birth_date);
 
         $customer = new Customer($name, $birthDate);
         $customer->notes = $customerRecord->notes;
-        $customer->phones[] = new Phone($phoneRecord->number);
+        if ($phoneRecord)
+            $customer->phones[] = new Phone($phoneRecord->number);
 
         return $customer;
     }

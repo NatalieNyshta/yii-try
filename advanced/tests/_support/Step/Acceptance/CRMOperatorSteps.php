@@ -15,7 +15,7 @@ class CRMOperatorSteps extends \AcceptanceTester
         return [
             'CustomerRecord[name]' => $faker->name,
             'CustomerRecord[birth_date]' => $faker->date('Y-m-d'),
-            'CustomerRecord[notes]' => $faker->sentences(8),
+            'CustomerRecord[notes]' => $faker->sentences(8, true),
             'PhoneRecord[number]' => $faker->phoneNumber
         ];
     }
@@ -24,7 +24,9 @@ class CRMOperatorSteps extends \AcceptanceTester
     {
         $I = $this;
         foreach ($fieldsData as $key => $value)
+        {
             $I->fillField($key, $value);
+        }
     }
 
     public function submitCustomerDataForm()
@@ -36,12 +38,18 @@ class CRMOperatorSteps extends \AcceptanceTester
     public function seeIAmInListCustomersUi()
     {
         $I = $this;
-        $I->seeCurrentUrlMatches('/customers/');
+        $I->seeCurrentUrlMatches('/customer/');
     }
 
     public function amInListCustomersUi()
     {
         $I = $this;
-        $I->amOnPage('/customers');
+        $I->amOnPage('/customer');
+    }
+
+    public function seeCustomerInList($customerData)
+    {
+        $I = $this;
+        $I->see($customerData['CustomerRecord[name]'], '#search_results');
     }
 }
