@@ -1,19 +1,25 @@
 <?php
 
-use yii\db\Migration;
+use console\migrations\CustomMigration;
 
-class m160922_134207_init_services_table extends Migration
+class m160922_134207_init_services_table extends CustomMigration
 {
     public function up()
     {
-
+        $this->createTable(
+            'service',
+            [
+                'id' => $this->primaryKey(11),
+                'name' => $this->string()->unique(),
+                'hourly_rate' => $this->integer(),
+            ],
+            $this->defaultTableOptions()
+        );
     }
 
     public function down()
     {
-        echo "m160922_134207_init_services_table cannot be reverted.\n";
-
-        return false;
+        $this->dropTable('service');
     }
 
     /*
